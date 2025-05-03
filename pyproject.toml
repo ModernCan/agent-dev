@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "agent-development"
+version = "0.1.0"
+description = ""
+authors = ["Shervin <shervin.khazaeli@yahoo.com>"]
+packages = [
+    { include = "agent_dev", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = "^2.11.1"
+langgraph = "^0.4.1"
+ipykernel = "^6.29.0"
+
+[tool.poetry.group.dev.dependencies]
+jupyterlab = "^4.1.0"
+black = "^24.3.0"
+ruff = "^0.4.3"
+pytest = "^8.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
