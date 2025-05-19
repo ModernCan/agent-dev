@@ -1,5 +1,5 @@
-"""
-Orchestrator-Worker Module.
+# -*- coding: utf-8 -*-
+"""Orchestrator-Worker Module.
 
 This module demonstrates the orchestrator-worker pattern, where a central LLM
 plans and delegates tasks to worker LLMs, then synthesizes their results.
@@ -21,6 +21,8 @@ from IPython.display import Image, Markdown
 load_dotenv()
 
 # Define schemas for the report sections
+
+
 class Section(BaseModel):
     """Schema for an individual report section."""
     name: str = Field(
@@ -43,7 +45,8 @@ class ReportState(TypedDict):
     """Type definition for the report generation state."""
     topic: str  # Report topic
     sections: list[Section]  # List of report sections
-    completed_sections: Annotated[list, operator.add]  # All workers write to this key in parallel
+    # All workers write to this key in parallel
+    completed_sections: Annotated[list, operator.add]
     final_report: str  # Final report
 
 
@@ -57,19 +60,19 @@ class OrchestratorWorker:
     """
     Implements the orchestrator-worker pattern where a central LLM plans and
     delegates tasks to worker LLMs, then synthesizes their results.
-    
+
     This class demonstrates how to break down a complex task (report creation),
     delegate sections to workers, and combine their outputs.
     """
-    
+
     def __init__(
-        self, 
-        model_name: str = "claude-3-5-sonnet-latest", 
+        self,
+        model_name: str = "claude-3-5-sonnet-latest",
         api_key: Optional[str] = None
     ):
         """
         Initialize the OrchestratorWorker with specified model.
-        
+
         Args:
             model_name: The name of the Anthropic model to use
             api_key: Optional API key for Anthropic (defaults to env variable)
@@ -77,16 +80,16 @@ class OrchestratorWorker:
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError("Anthropic API key is required.")
-            
+
         self.model_name = model_name
         self.llm = ChatAnthropic(model=model_name)
         self.planner = self.llm.with_structured_output(Sections)
         self.workflow = self._build_workflow()
-        
+
     def _build_workflow(self) -> StateGraph:
         """
         Builds the orchestrator-worker workflow.
-        
+
         Returns:
             A compiled LangGraph StateGraph representing the workflow
         """
@@ -108,14 +111,14 @@ class OrchestratorWorker:
 
         # Compile the workflow
         return orchestrator_worker_builder.compile()
-    
+
     def orchestrator(self, state: ReportState) -> Dict[str, List[Section]]:
         """
         The orchestrator that plans the report sections.
-        
+
         Args:
             state: The current workflow state containing the report topic
-            
+
         Returns:
             Dictionary with the report sections to be added to the state
         """
@@ -123,19 +126,20 @@ class OrchestratorWorker:
         report_sections = self.planner.invoke(
             [
                 SystemMessage(content="Generate a plan for the report."),
-                HumanMessage(content=f"Here is the report topic: {state['topic']}"),
+                HumanMessage(
+                    content=f"Here is the report topic: {state['topic']}"),
             ]
         )
 
         return {"sections": report_sections.sections}
-    
+
     def assign_workers(self, state: ReportState) -> List[Send]:
         """
         Assign workers to each section in the report plan.
-        
+
         Args:
             state: The current workflow state containing the sections
-            
+
         Returns:
             List of Send objects to trigger worker tasks
         """
@@ -145,10 +149,10 @@ class OrchestratorWorker:
     def worker(self, state: WorkerState) -> Dict[str, List[str]]:
         """
         A worker that writes a section of the report.
-        
+
         Args:
             state: The worker state containing the section to write
-            
+
         Returns:
             Dictionary with the completed section to be added to the state
         """
@@ -168,10 +172,10 @@ class OrchestratorWorker:
     def synthesizer(self, state: ReportState) -> Dict[str, str]:
         """
         Synthesize the full report from the completed sections.
-        
+
         Args:
             state: The current workflow state containing all completed sections
-            
+
         Returns:
             Dictionary with the final report to be added to the state
         """
@@ -182,23 +186,23 @@ class OrchestratorWorker:
         completed_report_sections = "\n\n---\n\n".join(completed_sections)
 
         return {"final_report": completed_report_sections}
-    
+
     def visualize(self) -> Image:
         """
         Generate a visualization of the workflow graph.
-        
+
         Returns:
             IPython Image object containing the workflow diagram
         """
         return Image(self.workflow.get_graph().draw_mermaid_png())
-    
+
     def run(self, topic: str) -> ReportState:
         """
         Execute the orchestrator-worker workflow with the given topic.
-        
+
         Args:
             topic: The report topic
-            
+
         Returns:
             The final state containing the completed report
         """
@@ -208,20 +212,20 @@ class OrchestratorWorker:
 
 def example_usage():
     """Demonstrate the usage of OrchestratorWorker."""
-    
+
     # Create the orchestrator-worker workflow
     report_workflow = OrchestratorWorker()
-    
+
     # Visualize the workflow (useful in notebooks)
     # display(report_workflow.visualize())
-    
+
     # Run the workflow
     result = report_workflow.run("Create a report on LLM scaling laws")
-    
+
     # Display the final report
     print("Final Report:\n")
     print(result["final_report"])
-    
+
     # For Jupyter notebooks
     # display(Markdown(result["final_report"]))
 

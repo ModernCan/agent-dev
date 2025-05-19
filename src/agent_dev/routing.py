@@ -1,5 +1,5 @@
-"""
-Routing Module.
+# -*- coding: utf-8 -*-
+"""Routing Module.
 
 This module demonstrates the routing pattern, where input is classified
 and directed to specialized handlers based on the classification.
@@ -19,6 +19,8 @@ from IPython.display import Image
 load_dotenv()
 
 # Define a schema for the routing decision
+
+
 class Route(BaseModel):
     """Schema for the routing decision."""
     step: Literal["poem", "story", "joke"] = Field(
@@ -38,19 +40,19 @@ class Routing:
     """
     Implements the routing pattern where input is classified and directed
     to specialized handlers based on the classification.
-    
+
     This class demonstrates how to use an LLM to make routing decisions
     and then direct the flow to specialized LLM calls.
     """
-    
+
     def __init__(
-        self, 
-        model_name: str = "claude-3-5-sonnet-latest", 
+        self,
+        model_name: str = "claude-3-5-sonnet-latest",
         api_key: Optional[str] = None
     ):
         """
         Initialize the Routing with specified model.
-        
+
         Args:
             model_name: The name of the Anthropic model to use
             api_key: Optional API key for Anthropic (defaults to env variable)
@@ -58,16 +60,16 @@ class Routing:
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError("Anthropic API key is required.")
-            
+
         self.model_name = model_name
         self.llm = ChatAnthropic(model=model_name)
         self.router = self.llm.with_structured_output(Route)
         self.workflow = self._build_workflow()
-        
+
     def _build_workflow(self) -> StateGraph:
         """
         Builds the routing workflow.
-        
+
         Returns:
             A compiled LangGraph StateGraph representing the workflow
         """
@@ -97,14 +99,14 @@ class Routing:
 
         # Compile workflow
         return router_builder.compile()
-    
+
     def route_input(self, state: RoutingState) -> Dict[str, str]:
         """
         Routes the input to the appropriate node based on classification.
-        
+
         Args:
             state: The current workflow state containing the input
-            
+
         Returns:
             Dictionary with the routing decision to be added to the state
         """
@@ -118,16 +120,16 @@ class Routing:
                 HumanMessage(content=state["input"]),
             ]
         )
-        
+
         return {"decision": decision.step}
-    
+
     def route_decision(self, state: RoutingState) -> str:
         """
         Conditional edge function to determine the next node.
-        
+
         Args:
             state: The current workflow state containing the routing decision
-            
+
         Returns:
             The name of the next node to visit
         """
@@ -144,10 +146,10 @@ class Routing:
     def write_story(self, state: RoutingState) -> Dict[str, str]:
         """
         Handler for story generation.
-        
+
         Args:
             state: The current workflow state containing the input
-            
+
         Returns:
             Dictionary with the generated story to be added to the state
         """
@@ -160,10 +162,10 @@ class Routing:
     def write_joke(self, state: RoutingState) -> Dict[str, str]:
         """
         Handler for joke generation.
-        
+
         Args:
             state: The current workflow state containing the input
-            
+
         Returns:
             Dictionary with the generated joke to be added to the state
         """
@@ -176,10 +178,10 @@ class Routing:
     def write_poem(self, state: RoutingState) -> Dict[str, str]:
         """
         Handler for poem generation.
-        
+
         Args:
             state: The current workflow state containing the input
-            
+
         Returns:
             Dictionary with the generated poem to be added to the state
         """
@@ -188,23 +190,23 @@ class Routing:
             f"Write a beautiful poem based on this request: {state['input']}"
         )
         return {"output": result.content}
-    
+
     def visualize(self) -> Image:
         """
         Generate a visualization of the workflow graph.
-        
+
         Returns:
             IPython Image object containing the workflow diagram
         """
         return Image(self.workflow.get_graph().draw_mermaid_png())
-    
+
     def run(self, input_text: str) -> RoutingState:
         """
         Execute the routing workflow with the given input.
-        
+
         Args:
             input_text: The user request to route and process
-            
+
         Returns:
             The final state containing the output
         """
@@ -214,22 +216,22 @@ class Routing:
 
 def example_usage():
     """Demonstrate the usage of Routing."""
-    
+
     # Create the routing workflow
     routing = Routing()
-    
+
     # Visualize the workflow (useful in notebooks)
     # display(routing.visualize())
-    
+
     # Run the workflow with different inputs
     story_result = routing.run("Tell me a story about a space explorer")
     print("\nStory Output:")
     print(story_result["output"])
-    
+
     joke_result = routing.run("Make me laugh with something about programming")
     print("\nJoke Output:")
     print(joke_result["output"])
-    
+
     poem_result = routing.run("Create a poem about autumn leaves")
     print("\nPoem Output:")
     print(poem_result["output"])

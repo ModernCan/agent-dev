@@ -1,5 +1,5 @@
-"""
-Agent Module.
+# -*- coding: utf-8 -*-
+"""Agent Module.
 
 This module demonstrates a fully autonomous agent that can plan, take actions
 via tools, and respond to feedback in a continuous loop.
@@ -23,19 +23,19 @@ class Agent:
     """
     Implements a fully autonomous agent that can plan, take actions via tools,
     and respond to feedback in a continuous loop.
-    
+
     This class demonstrates how to create a system that can make decisions
     about which tools to use and when to use them to solve tasks.
     """
-    
+
     def __init__(
-        self, 
-        model_name: str = "claude-3-5-sonnet-latest", 
+        self,
+        model_name: str = "claude-3-5-sonnet-latest",
         api_key: Optional[str] = None
     ):
         """
         Initialize the Agent with specified model and tools.
-        
+
         Args:
             model_name: The name of the Anthropic model to use
             api_key: Optional API key for Anthropic (defaults to env variable)
@@ -43,24 +43,24 @@ class Agent:
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError("Anthropic API key is required.")
-            
+
         self.model_name = model_name
         self.llm = ChatAnthropic(model=model_name)
-        
+
         # Define tools
         self.tools = self._create_tools()
         self.tools_by_name = {tool.name: tool for tool in self.tools}
-        
+
         # Bind tools to the LLM
         self.llm_with_tools = self.llm.bind_tools(self.tools)
-        
+
         # Build the agent graph
         self.agent = self._build_agent()
-    
+
     def _create_tools(self) -> List[Callable]:
         """
         Create the tools that the agent can use.
-        
+
         Returns:
             A list of tool functions available to the agent
         """
@@ -94,13 +94,13 @@ class Agent:
                 b: second int
             """
             return a / b
-        
+
         return [add, multiply, divide]
-        
+
     def _build_agent(self) -> StateGraph:
         """
         Builds the agent workflow graph.
-        
+
         Returns:
             A compiled LangGraph StateGraph representing the agent
         """
@@ -125,14 +125,14 @@ class Agent:
 
         # Compile the agent
         return agent_builder.compile()
-    
+
     def llm_call(self, state: MessagesState) -> Dict[str, List]:
         """
         LLM decides whether to call a tool or not.
-        
+
         Args:
             state: The current message state
-            
+
         Returns:
             Dictionary with updated messages to be added to the state
         """
@@ -152,10 +152,10 @@ class Agent:
     def tool_executor(self, state: MessagesState) -> Dict[str, List]:
         """
         Executes the tool calls made by the LLM.
-        
+
         Args:
             state: The current message state with tool calls
-            
+
         Returns:
             Dictionary with tool results to be added to the state
         """
@@ -163,45 +163,46 @@ class Agent:
         for tool_call in state["messages"][-1].tool_calls:
             tool = self.tools_by_name[tool_call["name"]]
             observation = tool.invoke(tool_call["args"])
-            result.append(ToolMessage(content=str(observation), tool_call_id=tool_call["id"]))
+            result.append(ToolMessage(content=str(observation),
+                          tool_call_id=tool_call["id"]))
         return {"messages": result}
 
     def should_continue(self, state: MessagesState) -> Literal["Action", str]:
         """
         Decide if the agent should continue the loop or stop.
-        
+
         Args:
             state: The current message state
-            
+
         Returns:
             "Action" if the LLM made a tool call, END otherwise
         """
         messages = state["messages"]
         last_message = messages[-1]
-        
+
         # If the LLM makes a tool call, then perform an action
         if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
             return "Action"
-        
+
         # Otherwise, we stop (reply to the user)
         return END
-    
+
     def visualize(self) -> Image:
         """
         Generate a visualization of the agent graph.
-        
+
         Returns:
             IPython Image object containing the agent diagram
         """
         return Image(self.agent.get_graph(xray=True).draw_mermaid_png())
-    
+
     def run(self, query: str) -> MessagesState:
         """
         Execute the agent with the given query.
-        
+
         Args:
             query: The user's query or task
-            
+
         Returns:
             The final message state containing the conversation
         """
@@ -212,26 +213,28 @@ class Agent:
 
 def example_usage():
     """Demonstrate the usage of Agent."""
-    
+
     # Create the agent
     arithmetic_agent = Agent()
-    
+
     # Visualize the agent (useful in notebooks)
     # display(arithmetic_agent.visualize())
-    
+
     # Run the agent
-    result = arithmetic_agent.run("Add 3 and 4. Then, take the output and multiply by 4.")
-    
+    result = arithmetic_agent.run(
+        "Add 3 and 4. Then, take the output and multiply by 4.")
+
     # Print results
     print("Final conversation:")
     for message in result["messages"]:
-        print(f"\n{'User' if isinstance(message, HumanMessage) else 'Assistant'}: {message.content}")
-        
+        print(
+            f"\n{'User' if isinstance(message, HumanMessage) else 'Assistant'}: {message.content}")
+
         # Print any tool calls
         if hasattr(message, 'tool_calls') and message.tool_calls:
             for tool_call in message.tool_calls:
                 print(f"  Tool Call: {tool_call['name']}({tool_call['args']})")
-    
+
 
 if __name__ == "__main__":
     example_usage()
