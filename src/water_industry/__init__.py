@@ -27,6 +27,7 @@ from .treatment_optimizer import (
     OptimizationState,
     ProcessEvaluation
 )
+from .water_quality_agent import WaterQualityAgent
 
 # Common utilities
 from .utils import (
@@ -72,6 +73,7 @@ __all__ = [
     'save_report_as_pdf',
     'load_water_sample_data',
     'generate_report_chart',
+    'WaterQualityAgent',
 
     # Example data loaders
     'sample_water_quality_parameters',

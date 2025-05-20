@@ -33,3 +33,11 @@ pytest = "^8.1.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+water-quality-demo = "water_industry.water_quality_workflow:example_usage"
+plant-monitoring-demo = "water_industry.treatment_monitoring:example_usage"
+customer-service-demo = "water_industry.customer_service_system:example_usage"
+drought-management-demo = "water_industry.drought_management_system:example_usage"
+treatment-optimizer-demo = "water_industry.treatment_optimizer:example_usage"
+water-quality-agent-demo = "water_industry.water_quality_agent:example_usage"
